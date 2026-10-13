@@ -2,7 +2,7 @@
 - [feature] `GeminiLanguageModel` now supports image input (the `vision`
   capability). Prompts can include image attachments created from a `CGImage`,
   a `CVPixelBuffer`, or a file URL; images from remote URLs aren't supported
-  yet. (#TBD)
+  yet. (#16895)
 - [fixed] Fixed crashes when a chat session's history contained parts with
   unrecognized data or code execution parts received from the server, when
   creating a `ModelContent` with an unsupported `Part` type, and when decoding a
