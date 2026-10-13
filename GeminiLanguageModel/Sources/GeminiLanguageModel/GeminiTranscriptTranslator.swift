@@ -299,10 +299,10 @@
 
     /// Extracts the Gemini parts for the segments of a prompt entry.
     ///
-    /// Segment order is preserved: each contiguous run of text segments becomes one text part and
-    /// each image attachment becomes one inline data part. Empty text runs are dropped when the
-    /// prompt contains an image; a prompt without images always produces exactly one text part,
-    /// even if it's empty.
+    /// Segment order is preserved: each contiguous, non-empty run of text segments becomes one
+    /// text part and each image attachment becomes one inline data part. A prompt that would
+    /// otherwise produce no parts (for example, a prompt containing only empty text) produces a
+    /// single empty text part.
     ///
     /// - Parameters:
     ///   - segments: The prompt segments to translate.
@@ -316,13 +316,12 @@
     ) throws -> [Part] {
       var parts: [Part] = []
       var pendingText: String?
-      var containsImage = false
 
       func flushPendingText() {
-        if let text = pendingText {
+        if let text = pendingText, !text.isEmpty {
           parts.append(Part(data: .text(text)))
-          pendingText = nil
         }
+        pendingText = nil
       }
 
       for segment in segments {
@@ -334,7 +333,6 @@
           case .image(let imageAttachment):
             flushPendingText()
             parts.append(Part(data: try translateImage(imageAttachment, in: entry)))
-            containsImage = true
           // `Transcript.Attachment.data` was added in the Xcode 27.2 SDK (FoundationModels 2.1).
           #if canImport(FoundationModels, _version: 2.1)
             case .data:
@@ -363,15 +361,7 @@
       }
       flushPendingText()
 
-      guard containsImage else {
-        return parts.isEmpty ? [Part(data: .text(""))] : parts
-      }
-      return parts.filter { part in
-        if case .text(let text) = part.data {
-          return !text.isEmpty
-        }
-        return true
-      }
+      return parts.isEmpty ? [Part(data: .text(""))] : parts
     }
 
     /// Translates an image attachment into Gemini part data.
@@ -405,7 +395,7 @@
         case .attachment:
           throw makeUnsupportedError(
             entry,
-            description: "Attachment segments in transcript are not supported."
+            description: "Attachment segments are only supported in prompts."
           )
         case .structure:
           throw makeUnsupportedError(
