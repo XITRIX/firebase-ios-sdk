@@ -168,49 +168,10 @@ FBLPromise* FIRCLSContextInitialize(FIRCLSContextInitData* initData,
         FIRCLSContextAppendToRoot(rootPath, fileName);
   });
 
-  // To initialize Crashlytics handlers even if the Xcode debugger is attached, replace this check
-  // with YES. Note that this is only possible to do on an actual device as it will cause the
-  // simulator to crash.
-  if (!_firclsContext.readonly->debuggerAttached) {
-#if CLS_SIGNAL_SUPPORTED
-    dispatch_group_async(group, queue, ^{
-      _firclsContext.readonly->signal.path =
-          FIRCLSContextAppendToRoot(rootPath, FIRCLSReportSignalFile);
-
-      FIRCLSSignalInitialize(&_firclsContext.readonly->signal);
-    });
-#endif
-
-#if CLS_MACH_EXCEPTION_SUPPORTED
-    dispatch_group_async(group, queue, ^{
-      _firclsContext.readonly->machException.path =
-          FIRCLSContextAppendToRoot(rootPath, FIRCLSReportMachExceptionFile);
-
-      // MacOS12 below does not support identity protected behavior
-      // check releases here: https://opensource.apple.com/releases/
-      // TODO: remove EXCEPTION_DEFAULT support when we bump min MacOS support to 12+
-      _firclsContext.readonly->machException.behavior = EXCEPTION_DEFAULT;
-      if (@available(macOS 12, *)) {
-        if (!initData.machExceptionDefaultBehavior) {
-          _firclsContext.readonly->machException.behavior = EXCEPTION_IDENTITY_PROTECTED;
-        }
-      }
-      FIRCLSMachExceptionInit(&_firclsContext.readonly->machException);
-    });
-#endif
-
-    dispatch_group_async(group, queue, ^{
-      _firclsContext.readonly->exception.path =
-          FIRCLSContextAppendToRoot(rootPath, FIRCLSReportExceptionFile);
-      _firclsContext.readonly->exception.maxCustomExceptions =
-          initData.customExceptionsEnabled ? initData.maxCustomExceptions : 0;
-
-      FIRCLSExceptionInitialize(&_firclsContext.readonly->exception,
-                                &_firclsContext.writable->exception);
-    });
-  } else {
-    FIRCLSSDKLog("Debugger present - not installing handlers\n");
-  }
+  // RPCS3 intentionally recovers guest VM faults. Never register native Mach,
+  // signal, Objective-C or C++ terminate handlers in this manual-reporting fork.
+  // User logging and non-fatal error/custom-exception storage above remain active.
+  FIRCLSSDKLog("Manual reporting only - not installing native handlers\n");
 
   dispatch_group_async(group, queue, ^{
     if (!FIRCLSContextRecordMetadata(rootPath, initData)) {

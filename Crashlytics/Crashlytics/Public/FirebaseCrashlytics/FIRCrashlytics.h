@@ -25,6 +25,9 @@ cause problems when registering exception handlers."
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Link-time guard for the RPCS3 fork that never installs native crash handlers.
+FOUNDATION_EXPORT BOOL FIRCrashlyticsManualReportingOnly(void);
+
 /**
  * The Firebase Crashlytics API provides methods to annotate and manage fatal and
  * non-fatal reports captured and reported to Firebase Crashlytics.

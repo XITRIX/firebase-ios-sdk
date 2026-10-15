@@ -396,16 +396,7 @@ typedef NSNumber FIRCLSWrappedReportAction;
 }
 
 - (void)crashReportingSetupCompleted {
-  // check our handlers
-  FIRCLSDispatchAfter(2.0, dispatch_get_main_queue(), ^{
-    FIRCLSExceptionCheckHandlers((__bridge void *)(self));
-#if CLS_SIGNAL_SUPPORTED
-    FIRCLSSignalCheckHandlers();
-#endif
-#if CLS_MACH_EXCEPTION_SUPPORTED
-    FIRCLSMachExceptionCheckHandlers();
-#endif
-  });
+  // This fork does not own native handlers; do not inspect RPCS3's handlers.
 
   // remove the launch failure marker and records and empty string since
   // we're avoiding mach_absolute_time calls.

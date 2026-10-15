@@ -77,6 +77,8 @@
 #endif
 
 FIRCLSContext _firclsContext;
+
+BOOL FIRCrashlyticsManualReportingOnly(void) { return YES; }
 dispatch_queue_t _firclsLoggingQueue;
 dispatch_queue_t _firclsBinaryImageQueue;
 dispatch_queue_t _firclsExceptionQueue;
